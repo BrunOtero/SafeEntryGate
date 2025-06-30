@@ -4,45 +4,52 @@ import com.safeentry.Gate.dto.EntradaRequest;
 import com.safeentry.Gate.dto.EntradaResponse;
 import com.safeentry.Gate.model.Entrada;
 import com.safeentry.Gate.service.EntradaService;
+import com.safeentry.Gate.util.JwtUtil; // Certifique-se de ter este JwtUtil auxiliar criado no Gate service
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication; // Para obter o usuário autenticado
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import jakarta.servlet.http.HttpServletRequest; // Importar HttpServletRequest
+
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/entradas")
 public class EntradaController {
 
     private final EntradaService entradaService;
+    private final JwtUtil jwtUtil; // Injetar o JwtUtil auxiliar
 
-    public EntradaController(EntradaService entradaService) {
+    public EntradaController(EntradaService entradaService, JwtUtil jwtUtil) { // Adicionar JwtUtil
         this.entradaService = entradaService;
+        this.jwtUtil = jwtUtil;
     }
 
-    // Endpoint para registrar uma nova entrada
-    // Apenas porteiros podem registrar entradas
     @PostMapping
-    // @PreAuthorize("hasAuthority('PORTEIRO')") // Use Spring Security se integrar com Auth Service
     public ResponseEntity<EntradaResponse> registrarEntrada(@Valid @RequestBody EntradaRequest request,
-                                                            Authentication authentication) {
+                                                            Authentication authentication,
+                                                            HttpServletRequest httpRequest) { // Injetar HttpServletRequest
         try {
-            // Extrair o ID do porteiro do token JWT (assumindo que o ID do usuário é um claim no JWT)
-            // Assim como no Visit Service, o porteiroId deve vir do token JWT após autenticação.
-            // Para testar, vamos usar um UUID mock.
             UUID porteiroId = null;
+            String authorizationHeader = httpRequest.getHeader("Authorization");
             if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
-                // Aqui você extrairia o UUID do porteiro do seu JWT, de forma semelhante ao moradorId no Visit Service
-                porteiroId = UUID.randomUUID(); // Mock UUID para demonstração. SUBSTITUA ISSO NO SEU APP REAL.
+                if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                    String jwt = authorizationHeader.substring(7); // Extrair o token JWT
+                    porteiroId = jwtUtil.extractUserId(jwt); // Extrair o userId do token
+                } else {
+                    throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token JWT não fornecido ou formato inválido.");
+                }
             } else {
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário não autenticado ou ID do porteiro não disponível.");
             }
 
-            Entrada novaEntrada = entradaService.registrarEntrada(request, porteiroId);
+            Entrada novaEntrada = entradaService.registrarEntrada(request, porteiroId, authorizationHeader);
             return ResponseEntity.status(HttpStatus.CREATED).body(convertToDto(novaEntrada));
         } catch (IllegalArgumentException | IllegalStateException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
@@ -52,7 +59,30 @@ public class EntradaController {
         }
     }
 
-    // Método auxiliar para converter Entrada para EntradaResponse DTO
+    @GetMapping("/me")
+    public ResponseEntity<List<EntradaResponse>> getMyEntradas(Authentication authentication,
+                                                               HttpServletRequest httpRequest) { // Injetar HttpServletRequest
+        if (authentication == null || !(authentication.getPrincipal() instanceof UserDetails)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário não autenticado.");
+        }
+
+        String authorizationHeader = httpRequest.getHeader("Authorization"); // Obter o cabeçalho Authorization
+        UUID porteiroId = null;
+
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            String jwt = authorizationHeader.substring(7); // Extrair o token JWT
+            porteiroId = jwtUtil.extractUserId(jwt); // Extrair o userId do token
+        } else {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token JWT não fornecido ou formato inválido.");
+        }
+
+        List<Entrada> entradas = entradaService.getEntradasByPorteiro(porteiroId);
+        List<EntradaResponse> responses = entradas.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responses);
+    }
+
     private EntradaResponse convertToDto(Entrada entrada) {
         return new EntradaResponse(
                 entrada.getId(),

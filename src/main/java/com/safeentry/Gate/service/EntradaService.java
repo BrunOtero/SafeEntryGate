@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -22,46 +23,47 @@ public class EntradaService {
     }
 
     @Transactional
-    public Entrada registrarEntrada(EntradaRequest request, UUID porteiroId) {
+    // Adicionado authorizationHeader
+    public Entrada registrarEntrada(EntradaRequest request, UUID porteiroId, String authorizationHeader) {
         // 1. Validar o QR Token com o Serviço de Visitantes
-        // Usamos .block() aqui para transformar o Mono em um objeto síncrono.
-        // Em um ambiente reativo, você faria toda a cadeia de forma reativa.
         VisitServiceAgendamentoResponse agendamentoResponse = visitServiceCommunicator
-                .getAgendamentoByQrToken(request.getQrToken())
+                .getAgendamentoByQrToken(request.getQrToken(), authorizationHeader) // Passa o authorizationHeader
                 .blockOptional()
                 .orElseThrow(() -> new IllegalArgumentException("QR Token inválido ou agendamento não encontrado."));
 
         // 2. Realizar validações adicionais (ex: verificar se o agendamento está pendente e não expirou)
-        if ("USADO".equals(agendamentoResponse.getStatus())) {
+        if ("usado".equals(agendamentoResponse.getStatus())) {
             throw new IllegalStateException("Este agendamento já foi utilizado.");
         }
-        if ("CANCELADO".equals(agendamentoResponse.getStatus())) {
+        if ("cancelado".equals(agendamentoResponse.getStatus())) {
             throw new IllegalStateException("Este agendamento foi cancelado.");
         }
-        if ("EXPIRADO".equals(agendamentoResponse.getStatus())) {
+        if ("expirado".equals(agendamentoResponse.getStatus())) {
             throw new IllegalStateException("Este agendamento expirou.");
         }
-        // Validação da data/hora da visita se for importante que a entrada ocorra próximo ao agendado
-        if (agendamentoResponse.getDataHoraVisita().isAfter(LocalDateTime.now().plusMinutes(30))) { // Ex: 30 minutos de tolerância após a data agendada
-             // Poderia ser um erro ou apenas um aviso, dependendo da regra de negócio
+        if (agendamentoResponse.getDataHoraVisita().isAfter(LocalDateTime.now().plusMinutes(30))) {
             System.out.println("Aviso: Tentativa de entrada muito antes do horário agendado. Agendamento para: " + agendamentoResponse.getDataHoraVisita());
         }
 
         // 3. Registrar a entrada no banco de dados do Gate Service
         Entrada entrada = new Entrada();
-        entrada.setAgendamentoId(agendamentoResponse.getId()); // ID do agendamento validado
-        entrada.setPorteiroId(porteiroId); // ID do porteiro autenticado
+        entrada.setAgendamentoId(agendamentoResponse.getId());
+        entrada.setPorteiroId(porteiroId);
         entrada.setObservacoes(request.getObservacoes());
-        entrada.setDataHoraEntrada(LocalDateTime.now()); // Data e hora da entrada
+        entrada.setDataHoraEntrada(LocalDateTime.now());
 
         Entrada savedEntrada = entradaRepository.save(entrada);
 
         // 4. Marcar o agendamento como usado no Serviço de Visitantes
-        visitServiceCommunicator.markAgendamentoAsUsed(request.getQrToken())
-                .block(); // Bloqueia para garantir que a atualização ocorra antes de retornar
+        visitServiceCommunicator.markAgendamentoAsUsed(request.getQrToken(), authorizationHeader) // Passa o authorizationHeader
+                .block();
 
         System.out.println("Entrada registrada com sucesso para agendamento ID: " + agendamentoResponse.getId());
 
         return savedEntrada;
+    }
+
+    public List<Entrada> getEntradasByPorteiro(UUID porteiroId) {
+        return entradaRepository.findByPorteiroId(porteiroId);
     }
 }
