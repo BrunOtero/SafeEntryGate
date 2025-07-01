@@ -12,15 +12,14 @@ public class VisitServiceAgendamentoResponse {
     private UUID moradorId;
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime dataHoraVisita;
-    private VisitanteInfo visitante; // Usaremos a mesma classe VisitanteInfo do Visit Service aqui
+    private VisitanteInfo visitante;
     private String qrToken;
     private Boolean usado;
-    private String status; // String para o enum AgendamentoStatus do Visit Service
+    private String status;
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime criadoEm;
 
-    // Classe interna para VisitanteInfo para evitar duplicação ou dependência cíclica
-    // Se quiser, pode criar um pacote 'shared' para DTOs comuns
+    // Classe interna para VisitanteInfo
     public static class VisitanteInfo {
         @JsonProperty("nome")
         private String nome;
@@ -37,7 +36,6 @@ public class VisitServiceAgendamentoResponse {
         public void setVeiculo(String veiculo) { this.veiculo = veiculo; }
     }
 
-    // Getters e Setters
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
     public UUID getMoradorId() { return moradorId; }

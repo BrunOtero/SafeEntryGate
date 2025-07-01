@@ -15,7 +15,6 @@ public class VisitServiceCommunicator {
         this.webClient = WebClient.builder().baseUrl(visitServiceBaseUrl).build();
     }
 
-    // Adicionado authorizationHeader
     public Mono<VisitServiceAgendamentoResponse> getAgendamentoByQrToken(String qrToken, String authorizationHeader) {
         return webClient.get()
                 .uri("/qr/{qrToken}", qrToken)
@@ -28,7 +27,6 @@ public class VisitServiceCommunicator {
                 .bodyToMono(VisitServiceAgendamentoResponse.class);
     }
 
-    // Adicionado authorizationHeader
     public Mono<VisitServiceAgendamentoResponse> markAgendamentoAsUsed(String qrToken, String authorizationHeader) {
         return webClient.patch()
                 .uri("/qr/{qrToken}/use", qrToken)

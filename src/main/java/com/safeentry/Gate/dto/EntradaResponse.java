@@ -21,7 +21,6 @@ public class EntradaResponse {
         this.observacoes = observacoes;
     }
 
-    // Getters
     public UUID getId() {
         return id;
     }

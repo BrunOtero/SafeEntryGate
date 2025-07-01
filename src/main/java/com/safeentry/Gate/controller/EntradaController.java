@@ -4,7 +4,7 @@ import com.safeentry.Gate.dto.EntradaRequest;
 import com.safeentry.Gate.dto.EntradaResponse;
 import com.safeentry.Gate.model.Entrada;
 import com.safeentry.Gate.service.EntradaService;
-import com.safeentry.Gate.util.JwtUtil; // Certifique-se de ter este JwtUtil auxiliar criado no Gate service
+import com.safeentry.Gate.util.JwtUtil;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +13,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import jakarta.servlet.http.HttpServletRequest; // Importar HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 import java.util.UUID;
@@ -24,9 +24,9 @@ import java.util.stream.Collectors;
 public class EntradaController {
 
     private final EntradaService entradaService;
-    private final JwtUtil jwtUtil; // Injetar o JwtUtil auxiliar
+    private final JwtUtil jwtUtil;
 
-    public EntradaController(EntradaService entradaService, JwtUtil jwtUtil) { // Adicionar JwtUtil
+    public EntradaController(EntradaService entradaService, JwtUtil jwtUtil) {
         this.entradaService = entradaService;
         this.jwtUtil = jwtUtil;
     }
@@ -34,7 +34,7 @@ public class EntradaController {
     @PostMapping
     public ResponseEntity<EntradaResponse> registrarEntrada(@Valid @RequestBody EntradaRequest request,
                                                             Authentication authentication,
-                                                            HttpServletRequest httpRequest) { // Injetar HttpServletRequest
+                                                            HttpServletRequest httpRequest) {
         try {
             UUID porteiroId = null;
             String authorizationHeader = httpRequest.getHeader("Authorization");
@@ -61,7 +61,7 @@ public class EntradaController {
 
     @GetMapping("/me")
     public ResponseEntity<List<EntradaResponse>> getMyEntradas(Authentication authentication,
-                                                               HttpServletRequest httpRequest) { // Injetar HttpServletRequest
+                                                               HttpServletRequest httpRequest) {
         if (authentication == null || !(authentication.getPrincipal() instanceof UserDetails)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário não autenticado.");
         }

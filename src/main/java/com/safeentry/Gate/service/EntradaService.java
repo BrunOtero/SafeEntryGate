@@ -23,7 +23,6 @@ public class EntradaService {
     }
 
     @Transactional
-    // Adicionado authorizationHeader
     public Entrada registrarEntrada(EntradaRequest request, UUID porteiroId, String authorizationHeader) {
         // 1. Validar o QR Token com o Serviço de Visitantes
         VisitServiceAgendamentoResponse agendamentoResponse = visitServiceCommunicator
@@ -55,7 +54,7 @@ public class EntradaService {
         Entrada savedEntrada = entradaRepository.save(entrada);
 
         // 4. Marcar o agendamento como usado no Serviço de Visitantes
-        visitServiceCommunicator.markAgendamentoAsUsed(request.getQrToken(), authorizationHeader) // Passa o authorizationHeader
+        visitServiceCommunicator.markAgendamentoAsUsed(request.getQrToken(), authorizationHeader)
                 .block();
 
         System.out.println("Entrada registrada com sucesso para agendamento ID: " + agendamentoResponse.getId());
@@ -64,6 +63,6 @@ public class EntradaService {
     }
 
     public List<Entrada> getEntradasByPorteiro(UUID porteiroId) {
-        return entradaRepository.findByPorteiroIdOrderByDataHoraEntradaDesc(porteiroId); // Modificação aqui
+        return entradaRepository.findByPorteiroIdOrderByDataHoraEntradaDesc(porteiroId);
     }
 }

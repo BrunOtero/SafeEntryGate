@@ -10,13 +10,8 @@ public class EntradaRequest {
     @NotBlank(message = "O token QR é obrigatório.")
     private String qrToken;
 
-    // O porteiroId virá do token JWT do porteiro, não do payload da requisição.
-    // Incluí-lo aqui seria apenas para fins de teste sem autenticação configurada.
-    // Para fins de demonstração, vou mantê-lo no service, injetando um mock ou obtendo do Authentication.
+    private String observacoes;
 
-    private String observacoes; // Campo opcional
-
-    // Getters e Setters
     public String getQrToken() {
         return qrToken;
     }

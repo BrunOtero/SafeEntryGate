@@ -29,17 +29,14 @@ public class Entrada {
     @Column(name = "observacoes")
     private String observacoes;
 
-    // Construtor padrão
     public Entrada() {}
 
-    // Construtor para criação
     public Entrada(UUID agendamentoId, UUID porteiroId, String observacoes) {
         this.agendamentoId = agendamentoId;
         this.porteiroId = porteiroId;
         this.observacoes = observacoes;
     }
 
-    // Getters e Setters
     public UUID getId() {
         return id;
     }
