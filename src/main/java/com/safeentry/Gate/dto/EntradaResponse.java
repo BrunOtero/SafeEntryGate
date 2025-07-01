@@ -9,7 +9,7 @@ public class EntradaResponse {
     private UUID id;
     private UUID agendamentoId;
     private UUID porteiroId;
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
     private LocalDateTime dataHoraEntrada;
     private String observacoes;
 

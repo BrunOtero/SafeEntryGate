@@ -64,6 +64,6 @@ public class EntradaService {
     }
 
     public List<Entrada> getEntradasByPorteiro(UUID porteiroId) {
-        return entradaRepository.findByPorteiroId(porteiroId);
+        return entradaRepository.findByPorteiroIdOrderByDataHoraEntradaDesc(porteiroId); // Modificação aqui
     }
 }

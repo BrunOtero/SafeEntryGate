@@ -10,4 +10,5 @@ import java.util.UUID;
 @Repository
 public interface EntradaRepository extends JpaRepository<Entrada, UUID> {
     List<Entrada> findByPorteiroId(UUID porteiroId);
+    List<Entrada> findByPorteiroIdOrderByDataHoraEntradaDesc(UUID porteiroId);
 }
